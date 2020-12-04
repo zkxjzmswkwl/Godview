@@ -1,10 +1,19 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, send_from_directory
+from flask_cors import CORS, cross_origin
 import requests
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static', static_folder='templates')
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 def geo_ip(ip):
-    r = requests.get(f'https://ipinfo.io/{ip}')
+    print(ip)
+    r = None
+
+    if len(ip) > 1:
+        r = requests.get(f'https://ipinfo.io/{ip}/geo')
+    else:
+        return
 
     if 'bogon' in r.json():
         return {'bogon': True}
@@ -19,6 +28,7 @@ def geo_ip(ip):
             }
 
 @app.route('/ip_to_coords/<inc_ips>')
+@cross_origin()
 def ip_to_coords(inc_ips):
     inc_ips = inc_ips.split(',')
     coords = {'results': []}
@@ -26,10 +36,9 @@ def ip_to_coords(inc_ips):
     for ip in inc_ips:
         coords['results'].append(geo_ip(ip))
 
-
     return jsonify(coords)
 
 @app.route('/')
 def godview():
-    return render_template('godview.html')
+    return render_template('index.html')
 
