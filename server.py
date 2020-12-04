@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 import requests
 
 app = Flask(__name__)
@@ -6,8 +6,8 @@ app = Flask(__name__)
 def geo_ip(ip):
     r = requests.get(f'https://ipinfo.io/{ip}')
 
-    if 'bogan' in r.json():
-        return {'bogan': True}
+    if 'bogon' in r.json():
+        return {'bogon': True}
 
     lat_long = r.json()['loc'].split(',')
 
@@ -21,15 +21,13 @@ def geo_ip(ip):
 @app.route('/ip_to_coords/<inc_ips>')
 def ip_to_coords(inc_ips):
     inc_ips = inc_ips.split(',')
-    coords = []
+    coords = {'results': []}
 
     for ip in inc_ips:
-        coords.append({'ip': ip})
-        print(geo_ip(ip))
+        coords['results'].append(geo_ip(ip))
 
-    print(coords)
 
-    return '200'
+    return jsonify(coords)
 
 @app.route('/')
 def godview():
